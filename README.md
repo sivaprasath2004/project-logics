@@ -68,3 +68,103 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+
+
+
+
+
+
+To implement BlurHash with React.js for loading 100 images, you can follow these steps:
+
+1. **Install Dependencies**: You need the `blurhash` library for encoding and decoding BlurHash strings and `react-blurhash` for displaying BlurHash placeholders in React.
+
+```bash
+npm install blurhash react-blurhash
+```
+
+2. **Create a Component to Display Images with BlurHash Placeholders**:
+
+Here is an example implementation:
+
+```javascript
+import React, { useState, useEffect } from 'react';
+import { Blurhash } from 'react-blurhash';
+import { encode } from 'blurhash';
+
+const ImageWithBlurhash = ({ src }) => {
+  const [blurhash, setBlurhash] = useState('');
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = src;
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0, img.width, img.height);
+      const imageData = context.getImageData(0, 0, img.width, img.height);
+      const blurhash = encode(imageData.data, imageData.width, imageData.height, 4, 4);
+      setBlurhash(blurhash);
+      setImageLoaded(true);
+    };
+  }, [src]);
+
+  return (
+    <div style={{ width: '400px', height: '300px', position: 'relative' }}>
+      {imageLoaded ? (
+        <img src={src} alt="Loaded" style={{ width: '100%', height: '100%' }} />
+      ) : (
+        <Blurhash
+          hash={blurhash}
+          width={400}
+          height={300}
+          resolutionX={32}
+          resolutionY={32}
+          punch={1}
+        />
+      )}
+    </div>
+  );
+};
+
+const ImageGallery = ({ images }) => {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {images.map((image, index) => (
+        <ImageWithBlurhash key={index} src={image} />
+      ))}
+    </div>
+  );
+};
+
+const App = () => {
+  const imageUrls = [
+    // Array of 100 image URLs
+  ];
+
+  return <ImageGallery images={imageUrls} />;
+};
+
+export default App;
+```
+
+### Explanation
+
+1. **ImageWithBlurhash Component**:
+    - This component handles loading the image and generating the BlurHash.
+    - It uses a `useState` hook to manage the BlurHash string and the loading state of the image.
+    - The `useEffect` hook loads the image and generates the BlurHash when the component mounts.
+    - If the image is loaded, it displays the image. Otherwise, it displays the BlurHash placeholder.
+
+2. **ImageGallery Component**:
+    - This component maps through the array of image URLs and renders the `ImageWithBlurhash` component for each URL.
+
+3. **App Component**:
+    - This is the main component that includes the `ImageGallery` component and passes an array of image URLs.
+
+Replace the `imageUrls` array with the actual URLs of the 100 images you want to load. This approach ensures that while the high-resolution images are loading, a BlurHash placeholder is displayed to enhance the user experience.
