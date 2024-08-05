@@ -1,43 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import images from '../asset/data.js'; 
-
-function PinterestLayout() {
-  const [imageHeights, setImageHeights] = useState([]);
-
-  useEffect(() => {
-    const fetchImageHeights = async () => {
-      const heights = await Promise.all(
-        images.map((url) => {
-          return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = url;
-            img.onload = () => resolve({ url, height: img.height });
-            img.onerror = () => reject(new Error('Failed to load image'));
-          });
-        })
-      );
-      setImageHeights(heights);
-    };
-
-    fetchImageHeights();
-  }, []);
-
-  console.log(imageHeights);
+import React,{useRef,useState,useEffect} from 'react';
+import images from '../asset/data.js';  
+import { Vertical_image_loaded } from './Vertical_image_loaded.js';
+function PinterestLayout() { 
+    const [Hole_images, setImages] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const containerRef = useRef(null);
   
+    useEffect(() => {
+      const loadImages = async () => {
+        setLoading(true);
+        // Replace this URL with your API or method to fetch images
+        const newImages = images.splice(page*20-20,page*20)
+        setImages(prevImages => [...prevImages, ...newImages]);
+        setLoading(false);
+      };
+  
+      loadImages();
+    }, [page]);
+  
+    const handleScroll = () => {
+      const container = containerRef.current;
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
+        setPage(prevPage => prevPage + 1);
+      }
+    };
+  
+    useEffect(() => {
+      const container = containerRef.current;
+      container.addEventListener('scroll', handleScroll);
+  
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+      };
+    }, []);
+  
+
   return (
+    <div style={{height:"100vh",width:'100vw'}}>
+    <section ref={containerRef} style={{width:"100%",height:"100%",overflowY:'scroll'}}>
     <div style={styles.pin_container}>
-      {imageHeights.map((item, index) => (
-        <div
-          key={index}
-          style={{
-            ...styles.card,
-            ...styles[item.height > 800 ? "large" : "small"]
-          }}
-        > 
-        <p style={{position:"absolute",zIndex:1,color:"white",fontSize:"2rem",fontWeight:"600"}}>{index}</p>
-        <img src={item.url} style={{width:"100%",objectFit:"contain"}} />
-        </div>
-      ))}
+      {
+        Hole_images.map((item,index)=>(
+          <Vertical_image_loaded key={`vertical_layout_image_${index}`} item={item} index={index} />
+        ))
+      }
+    </div>
+    </section>
     </div>
   );
 }
@@ -46,30 +55,11 @@ const styles = {
   pin_container: {
     margin: 0,
     padding: 0,
-    width: '100vw',
+    width: '100%',
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 30vw)',
-    gridAutoRows: '10px',
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    gridTemplateColumns: 'repeat(3, 33%)', 
     justifyContent: 'center',
-    backgroundColor: 'black',
-    rowGap:"0.2rem"
-  },
-  card: { 
-    margin:"1rem",
-        padding: 0,
-        borderRadius: '16px', 
-  },
-  small: {
-    gridRowEnd: 'span 20',
-  },
-  medium: {
-    gridRowEnd: 'span 33',
-  },
-  large: {
-    gridRowEnd: 'span 45',
+    backgroundColor: 'black', 
   },
 };
 
